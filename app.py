@@ -1,5 +1,5 @@
 # =====================================================
-# Day By Day - Stable Version
+# Day By Day - Stable & Forgiving Version
 # =====================================================
 import streamlit as st
 from datetime import date
@@ -29,7 +29,7 @@ def save_data(data):
 
 data = load_data()
 
-def add_dash(income, spending, minutes, miles, count=1):
+def add_dash(income=0.0, spending=0.0, minutes=0, miles=0.0, count=1):
     global data
     today = str(date.today())
     if today not in data["daily_logs"]:
@@ -56,7 +56,7 @@ with st.sidebar:
     
     if st.button("✅ Add to Log"):
         add_dash(income, spending, minutes, miles, count)
-        st.success("Added!")
+        st.success("✅ Added!")
         st.rerun()
 
 # ====================== TABS ======================
@@ -65,31 +65,29 @@ tab1, tab2, tab3 = st.tabs(["📊 Today", "📅 History", "📈 Stats"])
 with tab1:
     today = str(date.today())
     dashes = data["daily_logs"].get(today, [])
-    total_income = sum(d["income"] for d in dashes)
-    total_spending = sum(d["spending"] for d in dashes)
-    net = total_income - total_spending
+    total_income = sum(d.get("income", 0) for d in dashes)
+    total_spending = sum(d.get("spending", 0) for d in dashes)
     
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Net Today", f"${net:.2f}")
-    col2.metric("Income", f"${total_income:.2f}")
-    col3.metric("Spending", f"${total_spending:.2f}")
-    col4.metric("Dashes", len(dashes))
+    st.metric("Net Today", f"${total_income - total_spending:.2f}")
+    st.metric("Income", f"${total_income:.2f}")
+    st.metric("Spending", f"${total_spending:.2f}")
+    st.metric("Dashes Today", len(dashes))
 
 with tab2:
     st.subheader("Daily History")
     for day in sorted(data["daily_logs"].keys(), reverse=True):
         dashes = data["daily_logs"][day]
-        total = sum(d["income"] for d in dashes)
-        with st.expander(f"{day} — ${total:.2f} net"):
+        total = sum(d.get("income", 0) for d in dashes)
+        with st.expander(f"{day} — ${total:.2f}"):
             for i, d in enumerate(dashes, 1):
-                st.write(f"Dash {i} @ {d['time']} | +${d['income']:.2f} | -${d['spending']:.2f} | {d['minutes']}min | {d['miles']}mi")
+                st.write(f"Dash {i} @ {d.get('time','')} | +${d.get('income',0):.2f} | -${d.get('spending',0):.2f}")
 
 with tab3:
     st.subheader("Lifetime Stats")
     all_dashes = [d for day_dashes in data["daily_logs"].values() for d in day_dashes]
-    total_income = sum(d["income"] for d in all_dashes)
-    total_spending = sum(d["spending"] for d in all_dashes)
+    total_income = sum(d.get("income", 0) for d in all_dashes)
+    total_spending = sum(d.get("spending", 0) for d in all_dashes)
     st.metric("Total Earned", f"${total_income:.2f}")
     st.metric("Total Spent", f"${total_spending:.2f}")
 
-st.caption("Auto-saves • Individual dashes stored • Day By Day")
+st.caption("Day By Day - Stable Version")
